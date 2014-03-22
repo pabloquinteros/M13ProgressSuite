@@ -26,8 +26,6 @@
 @property (nonatomic, assign) CFTimeInterval animationStartTime;
 /**Link to the display to keep animations in sync.*/
 @property (nonatomic, strong) CADisplayLink *displayLink;
-/**Allow us to write to the progress.*/
-@property (nonatomic, readwrite) CGFloat progress;
 /**The view of the progress bar.*/
 @property (nonatomic, retain) UIView *progressBar;
 /**The layer that displays progress in the progress bar.*/
@@ -132,6 +130,7 @@
     [super setPrimaryColor:primaryColor];
     _percentageLabel.foregroundColor = self.primaryColor.CGColor;
     _progressLayer.strokeColor = self.primaryColor.CGColor;
+    _indeterminateLayer.backgroundColor = self.primaryColor.CGColor;
     [self setNeedsDisplay];
 }
 

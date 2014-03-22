@@ -67,6 +67,22 @@
     return self;
 }
 
+- (id)initAndShowWithProgressView:(M13ProgressView *)progressView progress:(CGFloat)progress indeterminate:(BOOL)indeterminate status:(NSString *)status mask:(M13ProgressHUDMaskType)maskType inView:(UIView *)view
+{
+    self = [super init];
+    if (self) {
+        _progressView = progressView;
+        [self setup];
+        self.progress = progress;
+        self.indeterminate = indeterminate;
+        self.status = status;
+        self.maskType = maskType;
+        [view addSubview:self];
+        [self show:YES];
+    }
+    return self;
+}
+
 - (void)setup
 {
     //Set the defaults for the progress view
@@ -76,6 +92,7 @@
     _secondaryColor = [UIColor colorWithRed:181/255.0 green:182/255.0 blue:183/255.0 alpha:1.0];
     _progress = 0;
     _indeterminate = NO;
+    _shouldAutorotate = YES;
     if (self.frame.size.height != 0 && self.frame.size.width != 0) {
         _progressViewSize = CGSizeMake(150 / 4, 150 / 4);
     }
@@ -278,8 +295,16 @@
 - (void)show:(BOOL)animated
 {
     //reset the blurs to the curent screen if need be
+    [self registerForNotificationCenter];
     [self setNeedsLayout];
     [self setNeedsDisplay];
+
+    if (!CGPointEqualToPoint(self.animationPoint, CGPointZero)) {
+      CGRect r = backgroundView.frame;
+      r.origin = CGPointApplyAffineTransform([self convertPoint:self.animationPoint toView:backgroundView], CGAffineTransformMakeTranslation(-r.size.width/3.5, r.size.height/1.25));
+      backgroundView.frame = r;
+    }
+
     //Animate the HUD on screen
     [CATransaction begin];
     CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
@@ -302,6 +327,8 @@
 
 - (void)hide:(BOOL)animated
 {
+    [self unregisterFromNotificationCenter];
+    
     CABasicAnimation *fadeAnimation = [CABasicAnimation animationWithKeyPath:@"opacity"];
     fadeAnimation.fromValue = [NSNumber numberWithFloat:1.0];
     fadeAnimation.toValue = [NSNumber numberWithFloat:0.0];
@@ -316,11 +343,28 @@
     scaleAnimation.removedOnCompletion = YES;
     
     [backgroundView.layer addAnimation:scaleAnimation forKey:@"transformAnimation"];
+
+    if (!CGPointEqualToPoint(self.animationPoint, CGPointZero)) {
+      CGRect r = backgroundView.frame;
+      CGPoint p =CGPointApplyAffineTransform([self convertPoint:self.animationPoint toView:backgroundView], CGAffineTransformMakeTranslation(r.size.width/8.0, r.size.height*1.25));
+
+      CABasicAnimation *frameAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
+      frameAnimation.fromValue = [NSValue valueWithCGPoint:backgroundView.layer.position];
+      frameAnimation.toValue = [NSValue valueWithCGPoint:p];
+      frameAnimation.removedOnCompletion = YES;
+      backgroundView.layer.position = p;
+      [backgroundView.layer addAnimation:frameAnimation forKey:@"frameAnimation"];
+    }
+
+    [CATransaction commit];
 }
 
 - (void)dismiss:(BOOL)animated
 {
     [self hide:animated];
+    
+    //Removes the HUD from the superview, dismissing it.
+    [self performSelector:@selector(removeFromSuperview) withObject:Nil afterDelay:_animationDuration];
 }
 
 #pragma mark - Notifications
@@ -336,11 +380,23 @@
 }
 
 - (void)deviceOrientationDidChange:(NSNotification *)notification {
-    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC));
-    dispatch_after(popTime, dispatch_get_main_queue(), ^{
-        [self setNeedsLayout];
-        [self setNeedsDisplay];
-    });
+    if (_shouldAutorotate) {
+        UIDeviceOrientation deviceOrientation = [notification.object orientation];
+        if (UIDeviceOrientationIsPortrait(deviceOrientation)) {
+            if (deviceOrientation == UIDeviceOrientationPortraitUpsideDown) {
+                _orientation = UIInterfaceOrientationPortraitUpsideDown;
+            } else {
+                _orientation = UIInterfaceOrientationPortrait;
+            }
+        } else {
+            if (deviceOrientation == UIDeviceOrientationLandscapeLeft) {
+                _orientation = UIInterfaceOrientationLandscapeLeft;
+            } else {
+                _orientation = UIInterfaceOrientationLandscapeRight;
+            }
+        }
+        [self layoutHUD];
+    }
 }
 
 #pragma mark Layout
@@ -370,7 +426,8 @@
     if (optimalStatusString.length != 0 && optimalStatusString != nil) {
         if (_statusPosition == M13ProgressHUDStatusPositionBelowProgress) {
             //Calculate background height
-            backgroundRect.size.height = _contentMargin + _progressViewSize.height + _contentMargin + statusRect.size.height + _contentMargin;
+            CGFloat backgroundRectBaseHeight = _progressViewSize.height + _contentMargin * 3;
+            backgroundRect.size.height = backgroundRectBaseHeight + statusRect.size.height;
             if (backgroundRect.size.height < _minimumSize.height) {
                 backgroundRect.size.height = _minimumSize.height;
             }
@@ -382,7 +439,7 @@
             }
             //Calculate background origin (Calculated to keep the progress bar in the same position on the screen during frame changes.)
             backgroundRect.origin.x = (self.bounds.size.width / 2.0) - (backgroundRect.size.width / 2.0);
-            backgroundRect.origin.y = (self.bounds.size.height / 2.0) - (_minimumSize.height / 2.0);
+            backgroundRect.origin.y = (self.bounds.size.height / 2.0) - (backgroundRectBaseHeight / 2.0);
             //Calculate the progress view rect
             progressRect.origin.x = (backgroundRect.size.width / 2.0) - (progressRect.size.width / 2.0);
             progressRect.origin.y = _contentMargin;
@@ -457,6 +514,23 @@
             statusRect.origin.y = (backgroundRect.size.height / 2.0) - (statusRect.size.height / 2.0);
         }
     } else {
+        //Calculate background height
+        backgroundRect.size.height = (statusRect.size.height > progressRect.size.height) ? statusRect.size.height : progressRect.size.height;
+        backgroundRect.size.height += 2 * _contentMargin;
+        if (backgroundRect.size.height < _minimumSize.height) {
+            backgroundRect.size.height = _minimumSize.height;
+        }
+        
+        //Calculate background width
+        backgroundRect.size.width = (statusRect.size.width > _progressViewSize.width) ? statusRect.size.width : _progressViewSize.width;
+        backgroundRect.size.width += 2 * _contentMargin;
+        if (backgroundRect.size.width < _minimumSize.width) {
+            backgroundRect.size.width = _minimumSize.width;
+        }
+        
+        backgroundRect.origin.x = (self.bounds.size.width / 2.0) - (backgroundRect.size.width / 2.0);
+        backgroundRect.origin.y = (self.bounds.size.height / 2.0) - (_minimumSize.height / 2.0);        
+        
         //There is no status label text, center the progress view
         progressRect.origin.x = (backgroundRect.size.width / 2.0) - (progressRect.size.width / 2.0);
         progressRect.origin.y = (backgroundRect.size.height / 2.0) - (progressRect.size.height / 2.0);
@@ -464,16 +538,25 @@
         statusRect.size.height = 0.0;
     }
     
+    //Swap height and with on rotation
+    if (_orientation == UIInterfaceOrientationLandscapeLeft || _orientation == UIInterfaceOrientationLandscapeRight) {
+        //Flip the width and height.
+        CGFloat temp = backgroundRect.size.width;
+        backgroundRect.size.width = backgroundRect.size.height;
+        backgroundRect.size.height = temp;
+    }
+    
     //Set the frame of the background and its subviews
     [UIView animateWithDuration:_animationDuration animations:^{
-        backgroundView.frame = backgroundRect;
-        _progressView.frame = progressRect;
+        backgroundView.frame = CGRectIntegral(backgroundRect);
+        _progressView.frame = CGRectIntegral(progressRect);
+         backgroundView.transform = CGAffineTransformMakeRotation([self angleForDeviceOrientation]);
         //Fade the label
         statusLabel.alpha = 0.0;
     } completion:^(BOOL finished) {
         if (finished) {
             //Set the label frame
-            statusLabel.frame = statusRect;
+            statusLabel.frame = CGRectIntegral(statusRect);
             statusLabel.text = optimalStatusString;
             [UIView animateWithDuration:_animationDuration animations:^{
                 //Show the label
@@ -595,7 +678,7 @@
         //Set the background
         maskView.backgroundColor = [UIColor colorWithPatternImage:image];
     } else if (_maskType == M13ProgressHUDMaskTypeIOS7Blur) {
-        [self redrawBlurs];
+        // do nothing; we don't want to take a snapshot of the background for blurring now, no idea what the background is
     }
 }
 
@@ -674,12 +757,11 @@
 
 - (CGFloat)angleForDeviceOrientation
 {
-    UIInterfaceOrientation orientation = UIApplication.sharedApplication.statusBarOrientation;
-    if (orientation == UIInterfaceOrientationLandscapeLeft) {
-        return -M_PI_2;
-    } else if (orientation == UIInterfaceOrientationLandscapeRight) {
+    if (_orientation == UIInterfaceOrientationLandscapeLeft) {
         return M_PI_2;
-    } else if (orientation == UIInterfaceOrientationPortraitUpsideDown) {
+    } else if (_orientation == UIInterfaceOrientationLandscapeRight) {
+        return -M_PI_2;
+    } else if (_orientation == UIInterfaceOrientationPortraitUpsideDown) {
         return M_PI;
     }
     return 0;

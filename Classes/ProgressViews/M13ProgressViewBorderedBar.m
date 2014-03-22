@@ -22,8 +22,6 @@
 @property (nonatomic, assign) CFTimeInterval animationStartTime;
 /**Link to the display to keep animations in sync.*/
 @property (nonatomic, strong) CADisplayLink *displayLink;
-/**Allow us to write to the progress.*/
-@property (nonatomic, readwrite) CGFloat progress;
 /**The layer that contains the progress layer. That also masks the progress layer.*/
 @property (nonatomic, retain) CALayer *progressSuperLayer;
 /**The layer that displays progress in the progress bar.*/
@@ -406,7 +404,7 @@
     }
     
     //Draw the path
-    CGRect rect;
+    CGRect rect = CGRectZero;
     if (_progressDirection == M13ProgressViewBorderedBarProgressDirectionLeftToRight) {
         rect = CGRectMake(_borderWidth * 2, _borderWidth * 2, (self.bounds.size.width - (4 * _borderWidth)) * self.progress, self.bounds.size.height - (4 * _borderWidth));
     } else if (_progressDirection == M13ProgressViewBorderedBarProgressDirectionRightToLeft) {

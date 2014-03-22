@@ -36,6 +36,15 @@ typedef enum {
  @param progressView The progres view to display in the HUD.
  @note If you create the HUD with this method, you are responsible for creating the progress view and setting the frame size of the progress view.*/
 - (id)initWithProgressView:(M13ProgressView *)progressView;
+/**Initalize and show the hud with parameters.
+ @param progressView The progress view to show in the HUD.
+ @param indeterminate Wether or not the progress view is indeterminate.
+ @param progress The progress to display in the progress view.
+ @param status The status to display in the HUD.
+ @param maskType The type of mask to use for the HUD.
+ @param view The view to show the HUD in.
+ @return A instance of M13PRogressHUD*/
+- (id)initAndShowWithProgressView:(M13ProgressView *)progressView progress:(CGFloat)progress indeterminate:(BOOL)indeterminate status:(NSString *)status mask:(M13ProgressHUDMaskType)maskType inView:(UIView *)view;
 
 /**@name Progress View Convienence Properties*/
 /**The progress view displaied.*/
@@ -72,6 +81,8 @@ typedef enum {
 @property (nonatomic, retain) UIFont *statusFont;
 /**The size of the progress view.*/
 @property (nonatomic, assign) CGSize progressViewSize;
+/**The origin of the show/hide animation. show: will animate from this point, and hide: will animate to this point.*/
+@property (nonatomic, assign) CGPoint animationPoint;
 
 /**@name Properties*/
 /**The durations of animations in seconds.*/
@@ -85,6 +96,12 @@ typedef enum {
 @property (nonatomic, assign) BOOL dismissAfterAction;
 /**Wether or not the HUD is currenty visible.*/
 - (BOOL)isVisible;
+/**Wether or not the HUD will auto rotate to the device orientation.
+ @note If set to `YES`, The HUD will rotate automatically to the device orientation, regardless of the interface orientation. This setting is suggested if the displayed view controller rotates and the HUD is displayed in a UIWindow. If the HUD is contained in a UIViewController. This setting should be set to NO, and the rotation should be set manually via the rotation property.
+ */
+@property (nonatomic, assign) BOOL shouldAutorotate;
+/**The orientation of the HUD.*/
+@property (nonatomic, assign) UIInterfaceOrientation orientation;
 
 /**@name Actions*/
 /**Set the progress of the `M13ProgressView`.
@@ -99,6 +116,7 @@ typedef enum {
  @param animated Wether or not to animate the change*/
 - (void)show:(BOOL)animated;
 /**Hide the progress HUD.
+ @note This method should be used when the HUD is going to be reused. When the HUD needs to be shown again, use `show:` do not initalize another instance. That will cause a memory leak. If the HUD is not going to be reused, use `dismiss:` instead. To retreive a hidden HUD, either hold onto it with a global variable, or use the `progressHUD` method for UIView.
  @param animated Wether or not to animate the change*/
 - (void)hide:(BOOL)animated;
 /**Dismiss the progress HUD and remove it from its superview.

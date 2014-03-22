@@ -5,18 +5,28 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
+<<<<<<< HEAD
 	<string>92AC2CED-AA02-466F-8400-FEB5B2948F03</string>
+=======
+	<string>7507E241-7356-49FB-9DC2-DBFCB588EA4D</string>
+>>>>>>> upstream/master
 	<key>IDESourceControlProjectName</key>
 	<string>M13ProgressSuite</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
+<<<<<<< HEAD
 		<key>8AD58329-6BF4-4BFC-82C5-C1F0AAED6CF4</key>
 		<string>https://github.com/pabloquinteros/M13ProgressSuite.git</string>
+=======
+		<key>80E955AD-59AA-4DA6-BFAA-1DAA897327A2</key>
+		<string>https://github.com/Marxon13/M13ProgressSuite.git</string>
+>>>>>>> upstream/master
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>M13ProgressSuite.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
+<<<<<<< HEAD
 		<key>8AD58329-6BF4-4BFC-82C5-C1F0AAED6CF4</key>
 		<string>../..</string>
 	</dict>
@@ -26,13 +36,28 @@
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
 	<string>8AD58329-6BF4-4BFC-82C5-C1F0AAED6CF4</string>
+=======
+		<key>80E955AD-59AA-4DA6-BFAA-1DAA897327A2</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/Marxon13/M13ProgressSuite.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>80E955AD-59AA-4DA6-BFAA-1DAA897327A2</string>
+>>>>>>> upstream/master
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
+<<<<<<< HEAD
 			<string>8AD58329-6BF4-4BFC-82C5-C1F0AAED6CF4</string>
+=======
+			<string>80E955AD-59AA-4DA6-BFAA-1DAA897327A2</string>
+>>>>>>> upstream/master
 			<key>IDESourceControlWCCName</key>
 			<string>M13ProgressSuite</string>
 		</dict>
